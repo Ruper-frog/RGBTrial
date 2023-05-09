@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Drawing;
 using System.Drawing.Imaging;
 
@@ -12,12 +9,38 @@ namespace RGBTrial
     {
         static void Main(string[] args)
         {
-            string Location = "C:\\Users\\ruper\\OneDrive\\שולחן העבודה\\Ruper\\5688116.jpg";
+            // Load the small images
+            Bitmap[] images = new Bitmap[100];
 
-            CreateAnImageFromAnotherImage();
+            for (int i = 0; i < 100; i++)
+                images[i] = new Bitmap("C:\\Users\\USER\\OneDrive\\שולחן העבודה\\Ruper\\wallpapersden.com_kali-linux-matrix_1980x1080.jpg");
+
+
+            // Set the target width and height
+            int targetWidth = 1920 * 10;
+            int targetHeight = 1080 * 10;
+
+            // Set the locations of the small images on the new image
+            Point[] locations = new Point[100];
+
+            int Index = 0;
+
+            for (int i = 0; i < 10; i++)
+            {
+                for (int j = 0; j < 10; j++)
+                {
+                    locations[Index++] = new Point(1920 * i, 1080 * j);
+                }
+            }
+
+            // Combine the images into a larger image
+            Bitmap combinedImage = CombineImages(images, targetWidth, targetHeight, locations);
+
+            // Save the result to a file
+            combinedImage.Save("C:\\Users\\USER\\OneDrive\\שולחן העבודה\\New folder (2)\\Combined Image.jpg", ImageFormat.Jpeg);
 
             return;
-
+            /*
             // Load the image file
             Image image = Image.FromFile(Location);
 
@@ -36,7 +59,7 @@ namespace RGBTrial
             // Display the RGB values
             Console.WriteLine("Red: {0}, Green: {1}, Blue: {2}", red, green, blue);
 
-            FindPixle(Location);
+            FindPixle(Location);*/
         }
         static void FindPixle(string URL)
         {
@@ -93,20 +116,54 @@ namespace RGBTrial
         }
         static void CreateAnImageFromAnotherImage()
         {
-            Image sourceImage = Image.FromFile("C:\\Users\\ruper\\OneDrive\\שולחן העבודה\\Ruper\\wallpapersden.com_hacker-anonymous-evil_3840x2160.jpg");
+            Image sourceImage = Image.FromFile("C:\\Users\\USER\\OneDrive\\שולחן העבודה\\New folder\\wallpapersden.com_kali-linux-matrix_1980x1080.jpg");
 
             Bitmap bmp = new Bitmap(sourceImage.Width, sourceImage.Height);
 
             Graphics g = Graphics.FromImage(bmp);
 
-            g.DrawImage(sourceImage, new Rectangle(0, 0, sourceImage.Width, sourceImage.Height));
+            g.DrawImage(sourceImage, new Rectangle(1000, 1000, sourceImage.Width, sourceImage.Height));
 
             Rectangle sourceRect = new Rectangle(0, 0, 100, 100);
             Rectangle destRect = new Rectangle(0, 0, 100, 100);
             g.DrawImage(sourceImage, destRect, sourceRect, GraphicsUnit.Pixel);
 
-            bmp.Save("C:\\Users\\ruper\\OneDrive\\שולחן העבודה\\Ruper\\new image.jpg", ImageFormat.Jpeg);
+            bmp.Save("C:\\Users\\USER\\OneDrive\\שולחן העבודה\\New folder (2)\\new image.jpg", ImageFormat.Jpeg);
 
+        }
+        public static Bitmap CombineImages(Bitmap[] images, int targetWidth, int targetHeight, Point[] locations)
+        {
+            // Create a new Bitmap object to hold the combined image
+            Bitmap result = new Bitmap(targetWidth, targetHeight);
+
+            using (Graphics g = Graphics.FromImage(result))
+            {
+                // Clear the new image with a white background
+                g.Clear(Color.White);
+
+                // Draw each small image onto the new image
+                for (int i = 0; i < images.Length; i++)
+                {
+                    int width = images[i].Width;
+                    int height = images[i].Height;
+
+                    // Shrink the image to fit into the target area
+                    if (width > targetWidth || height > targetHeight)
+                    {
+                        float ratio = Math.Min((float)targetWidth / width, (float)targetHeight / height);
+                        width = (int)(width * ratio);
+                        height = (int)(height * ratio);
+                    }
+
+                    // Calculate the location of the image on the new image
+                    int x = locations[i].X;
+                    int y = locations[i].Y;
+
+                    // Draw the image onto the new image
+                    g.DrawImage(images[i], new Rectangle(x, y, width, height));
+                }
+            }
+            return result;
         }
     }
 }
