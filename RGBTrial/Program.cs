@@ -7,27 +7,32 @@ namespace RGBTrial
 {
     internal class Program
     {
+        static int Width = 19800, Height = 16000;
         static void Main(string[] args)
         {
+            Resolution();
+
+            return;
+            /*
             // Load the small images
-            Bitmap[] images = new Bitmap[100];
+            Bitmap[] images = new Bitmap[Width * Height / (1920 * 1080)];
 
             for (int i = 0; i < 100; i++)
-                images[i] = new Bitmap("C:\\Users\\USER\\OneDrive\\שולחן העבודה\\Ruper\\wallpapersden.com_kali-linux-matrix_1980x1080.jpg");
+                images[i] = new Bitmap("C:\\Users\\USER\\OneDrive\\שולחן העבודה\\Ruper\\756769.jpg");
 
 
             // Set the target width and height
-            int targetWidth = 1920 * 10;
-            int targetHeight = 1080 * 10;
+            int targetWidth = Width;
+            int targetHeight = Height;
 
             // Set the locations of the small images on the new image
-            Point[] locations = new Point[100];
+            Point[] locations = new Point[Width * Height / (images[0].Width * images[0].Height)];
 
             int Index = 0;
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < Math.Round((double)Width / images[0].Width); i++)
             {
-                for (int j = 0; j < 10; j++)
+                for (int j = 0; j < Math.Round((double)Height / images[0].Height); j++)
                 {
                     locations[Index++] = new Point(1920 * i, 1080 * j);
                 }
@@ -37,7 +42,7 @@ namespace RGBTrial
             Bitmap combinedImage = CombineImages(images, targetWidth, targetHeight, locations);
 
             // Save the result to a file
-            combinedImage.Save("C:\\Users\\USER\\OneDrive\\שולחן העבודה\\New folder (2)\\Combined Image.jpg", ImageFormat.Jpeg);
+            combinedImage.Save("C:\\Users\\USER\\OneDrive\\שולחן העבודה\\New folder (2)\\Combined Image.jpg", ImageFormat.Jpeg);*/
 
             return;
             /*
@@ -60,6 +65,34 @@ namespace RGBTrial
             Console.WriteLine("Red: {0}, Green: {1}, Blue: {2}", red, green, blue);
 
             FindPixle(Location);*/
+        }
+        static void Resolution()
+        {
+            // Load the image from a file
+            Image originalImage = Image.FromFile("C:\\Users\\USER\\OneDrive\\שולחן העבודה\\New folder\\2086970.jpg");
+
+            // Set the desired width and height for the resized image
+            int width = 800;
+            int height = 600;
+
+            // Create a new Bitmap object with the desired width and height
+            Bitmap resizedImage = new Bitmap(width, height);
+
+            // Create a Graphics object from the Bitmap
+            Graphics graphics = Graphics.FromImage(resizedImage);
+
+            // Set the interpolation mode to HighQualityBicubic to ensure high quality resizing
+            graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+
+            // Draw the original image onto the resized Bitmap using the Graphics object
+            graphics.DrawImage(originalImage, 0, 0, width, height);
+
+            // Save the resized image to a file
+            resizedImage.Save("C:\\Users\\USER\\OneDrive\\שולחן העבודה\\New folder (2)\\Lower Resolution.jpg");
+
+            // Dispose of the Graphics object and the original image
+            graphics.Dispose();
+            originalImage.Dispose();
         }
         static void FindPixle(string URL)
         {
@@ -147,13 +180,13 @@ namespace RGBTrial
                     int width = images[i].Width;
                     int height = images[i].Height;
 
-                    // Shrink the image to fit into the target area
-                    if (width > targetWidth || height > targetHeight)
-                    {
-                        float ratio = Math.Min((float)targetWidth / width, (float)targetHeight / height);
-                        width = (int)(width * ratio);
-                        height = (int)(height * ratio);
-                    }
+                    //// Shrink the image to fit into the target area
+                    //if (width > targetWidth || height > targetHeight)
+                    //{
+                    //    float ratio = Math.Min((float)targetWidth / width, (float)targetHeight / height);
+                    //    width = (int)(width * ratio);
+                    //    height = (int)(height * ratio);
+                    //}
 
                     // Calculate the location of the image on the new image
                     int x = locations[i].X;
