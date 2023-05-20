@@ -3,15 +3,28 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Security.Cryptography;
 
 namespace RGBTrial
 {
     internal class Program
     {
-        static int CellSize = 32, ImageSize = 100;
+        static int ColorCellSize = 32,
+            LittleImageSize = 100,
+            FinalWidth = 19200, FinalHeight = 10800;
+
         static void Main(string[] args)
         {
-            SortImages("Trash");
+            foreach (string s in CheckFolders(""))
+                Console.WriteLine(s);
+
+            //TileBigImage("BigImage\\New Image.jpg", "");
+
+            //GenerateColorForTesting("Trash");
+
+            //MinImage("BigImage\\R.jpg", 192, 108);
+
+            //SortImages("Trash");
 
             return;
             /*
@@ -174,44 +187,84 @@ namespace RGBTrial
             }
             return result;
         }*/
-        static void MinImage(string ImageURL)
+        static void TileBigImage(string BigImageURL, string ImagesURL)
+        {
+            int IndexSize = (int)Math.Ceiling((float)256 / ColorCellSize);
+
+            int[,,] IndexOfFolder = new int[IndexSize, IndexSize, IndexSize];
+
+            for (int i = 0; i < IndexSize; i++)
+            {
+                for (int j = 0; j < IndexSize; j++)
+                {
+                    for (int k = 0; k < IndexSize; k++)
+                    {
+                        IndexOfFolder[i, j, k] = 0;
+                    }
+                }
+            }
+
+            Bitmap BigImage = new Bitmap(Image.FromFile(BigImageURL));
+
+            Bitmap FinalImage = new Bitmap(FinalWidth, FinalHeight);
+
+            Image LittleImage;
+
+            using (Graphics g = Graphics.FromImage(FinalImage))
+            {
+                for (int x = 0; x < BigImage.Width; x++)
+                {
+                    for (int y = 0; y < BigImage.Height; y++)
+                    {
+                        Color Pixel = BigImage.GetPixel(x, y);
+                        Pixel = CellRGB(Pixel.R, Pixel.G, Pixel.B);
+                        string FolderPath = Path.Combine(ImagesURL, ColorToString(Pixel));
+
+                        string[] ImagesArr = Directory.GetFiles(FolderPath);
+
+                        string LittleImageURL = ImagesArr[(IndexOfFolder[Pixel.R / ColorCellSize, Pixel.G / ColorCellSize, Pixel.B / ColorCellSize]++) % ImagesArr.Length];
+
+                        LittleImage = Image.FromFile(LittleImageURL);
+
+                        g.DrawImage(LittleImage, new Rectangle(x * LittleImageSize, y * LittleImageSize, LittleImageSize, LittleImageSize));
+
+                        LittleImage.Dispose();
+                    }
+                }
+                BigImage.Dispose();
+
+                FinalImage.Save(BigImageURL.Replace(GetImageName(BigImageURL), "Final Image.jpg"), ImageFormat.Png);
+
+                FinalImage.Dispose();
+            }
+        }
+        static void MinImage(string ImageURL, int WidthSize, int HeightSize)
         {
             Image Photo = Image.FromFile(ImageURL);
 
-            float ratio = Math.Max((float)ImageSize / Photo.Width, (float)ImageSize / Photo.Height);
+            float ratio = Math.Max(((float)WidthSize + 2) / Photo.Width, ((float)HeightSize + 2) / Photo.Height);
             int width = (int)(Photo.Width * ratio);
             int height = (int)(Photo.Height * ratio);
 
             Bitmap image = new Bitmap(Photo, width, height);
 
-            Bitmap result = new Bitmap(ImageSize, ImageSize);
+            Bitmap result = new Bitmap(WidthSize, HeightSize);
 
             using (Graphics g = Graphics.FromImage(result))
             {
                 g.Clear(Color.White);
 
-                g.DrawImage(image, new Rectangle(-(width - ImageSize) / 2, -(height - ImageSize) / 2, width, height));
+                g.DrawImage(image, new Rectangle(-(width - WidthSize) / 2, -(height - HeightSize) / 2, width, height));
             }
 
             Photo.Dispose();
 
-            result.Save(ImageURL.Replace(GetImageName(ImageURL), "NewImage.jpg"), ImageFormat.Png);
+            result.Save(ImageURL.Replace(GetImageName(ImageURL), "New Image.jpg"), ImageFormat.Png);
 
             image.Dispose();
             File.Delete(ImageURL);
 
             result.Dispose();
-        }
-        static void SortImages(string ImagesLocation)
-        {
-            List<string> files = new List<string>(Directory.GetFiles(ImagesLocation));
-
-            foreach (string File in files)
-            {
-                MinImage(File);
-                
-                //ImageToCell(File);
-            }
         }
         static void ImageToCell(string Image)
         {
@@ -247,11 +300,11 @@ namespace RGBTrial
 
             int R = 0, G = 0, B = 0;
 
-            for (int x = 0; x < image.Height; x++)
+            for (int x = 0; x < image.Width; x++)
             {
-                for (int y = 0; y < image.Width; y++)
+                for (int y = 0; y < image.Height; y++)
                 {
-                    Color Pixel = image.GetPixel(y, x);
+                    Color Pixel = image.GetPixel(x, y);
 
                     R += Pixel.R;
                     G += Pixel.G;
@@ -268,32 +321,85 @@ namespace RGBTrial
         }
         static Color CellRGB(int R, int G, int B)
         {
-            R /= CellSize;
-            G /= CellSize;
-            B /= CellSize;
+            R /= ColorCellSize;
+            G /= ColorCellSize;
+            B /= ColorCellSize;
 
-            R *= CellSize;
-            G *= CellSize;
-            B *= CellSize;
+            R *= ColorCellSize;
+            G *= ColorCellSize;
+            B *= ColorCellSize;
 
-            R += CellSize / 2;
-            G += CellSize / 2;
-            B += CellSize / 2;
+            R += ColorCellSize / 2;
+            G += ColorCellSize / 2;
+            B += ColorCellSize / 2;
 
             Color RGB = Color.FromArgb(R, G, B);
 
             return RGB;
         }
-        static Bitmap NewCanvas(int Height, int Width)
+        static Bitmap NewCanvas(int Width, int Height, Color color)
         {
-            Bitmap result = new Bitmap(Height, Width);
+            Bitmap result = new Bitmap(Width, Height);
 
             using (Graphics g = Graphics.FromImage(result))
             {
                 // Clear the new image with a white background
-                g.Clear(Color.White);
+                g.Clear(color);
             }
             return result;
+        }
+        //---------------------------------------------------------------
+        static List<string> CheckFolders(string FoldersLocation)
+        {
+            List<string> DoesntExist = new List<string>();
+
+            for (int R = 0; R < 256; R += ColorCellSize)
+            {
+                for (int G = 0; G < 256; G += ColorCellSize)
+                {
+                    for (int B = 0; B < 256; B += ColorCellSize)
+                    {
+                        string FolderPath = Path.Combine(FoldersLocation, ColorToString(CellRGB(R, G, B)));
+
+                        if ((!Directory.Exists(FolderPath)) || (Directory.GetFiles(FolderPath).Length == 0))
+                            DoesntExist.Add(GetImageName(FolderPath));
+                    }
+                }
+            }
+            return DoesntExist;
+        }
+        static void SortImages(string ImagesLocation)
+        {
+            List<string> files = new List<string>(Directory.GetFiles(ImagesLocation));
+
+            foreach (string File in files)
+            {
+                MinImage(File, LittleImageSize, LittleImageSize);
+
+                ImageToCell(File);
+            }
+        }
+        static void GenerateColorForTesting(string URL)
+        {
+            Random random = new Random();
+
+            for (int R = 0; R < 256; R += ColorCellSize)
+            {
+                for (int G = 0; G < 256; G += ColorCellSize)
+                {
+                    for (int B = 0; B < 256; B += ColorCellSize)
+                    {
+                        for (int i = 0; i < 90; i++)
+                        {
+                            Bitmap Canvas = NewCanvas(LittleImageSize, LittleImageSize, CellRGB(R, G, B));
+
+                            string Location = Path.Combine(URL, random.Next(1, 1000000000).ToString());
+
+                            Canvas.Save(Location + ".jpg", ImageFormat.Png);
+                        }
+                    }
+                }
+            }
         }
     }
 }
