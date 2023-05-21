@@ -3,190 +3,57 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Security.Cryptography;
 
 namespace RGBTrial
 {
     internal class Program
     {
         static int ColorCellSize = 32,
-            LittleImageSize = 100,
-            FinalWidth = 19200, FinalHeight = 10800;
+            LittleImageSize = 150,
+            FinalWidth = 28800, FinalHeight = 16200;
+        static int PhotoName = 0;
+
+        static int PercentageMessages = -1;
+
+        static int Process = 0, TOTAL, STEPS;
 
         static void Main(string[] args)
         {
-            foreach (string s in CheckFolders(""))
-                Console.WriteLine(s);
+            //foreach (string s in CheckFolders(""))
+            //    Console.WriteLine(s);
 
-            //TileBigImage("BigImage\\New Image.jpg", "");
+            //MinImage("BigImage\\R.jpg", FinalWidth / LittleImageSize, FinalHeight / LittleImageSize);
+
+            TileBigImage("BigImage\\New Image.jpg", "");
 
             //GenerateColorForTesting("Trash");
 
-            //MinImage("BigImage\\R.jpg", 192, 108);
 
             //SortImages("Trash");
-
-            return;
-            /*
-
-            // Load the small images
-            Bitmap[] images = new Bitmap[100];
-
-            for (int i = 0; i < 100; i++)
-                images[i] = new Bitmap("C:\\Users\\ruper\\OneDrive\\שולחן העבודה\\Ruper\\somthing somthing 1997.jpg");
-
-
-            // Set the target width and height
-            int targetWidth = images[0].Width * 10 * 3;
-            int targetHeight = images[0].Height * 10 * 3;
-
-            // Set the locations of the small images on the new image
-            Point[] locations = new Point[100];
-
-            int Index = 0;
-
-            for (int i = 0; i < 10; i++)
-            {
-                for (int j = 0; j < 10; j++)
-                {
-                    locations[Index++] = new Point(images[0].Width * i, images[0].Height * j);
-                }
-            }
-
-            // Combine the images into a larger image
-            Bitmap combinedImage = CombineImages(images, targetWidth, targetHeight, locations);
-
-            // Save the result to a file
-            combinedImage.Save("C:\\Users\\ruper\\OneDrive\\שולחן העבודה\\Ruper\\Combined Image.jpg", ImageFormat.Jpeg);
-            */
-
-            return;
-            /*
-            // Load the image file
-            Image image = Image.FromFile(Location);
-
-            // Get the pixel at position (0, 0)
-            Color pixelColor = ((Bitmap)image).GetPixel(image.Width / 3, image.Height / 2 + 100);
-
-            Console.WriteLine("Image Width: " + image.Width + " \nmage Height: " + image.Height);
-
-            Console.WriteLine();
-
-            // Get the RGB values
-            int red = pixelColor.R;
-            int green = pixelColor.G;
-            int blue = pixelColor.B;
-
-            // Display the RGB values
-            Console.WriteLine("Red: {0}, Green: {1}, Blue: {2}", red, green, blue);
-
-            FindPixle(Location);*/
         }
-        /*
-        static void FindPixle(string URL)
+        static void PrintPercentage()
         {
-            // Load image file
-            Bitmap image = new Bitmap(URL);
+            int Pre = (int)Math.Floor((float) Process * STEPS / TOTAL);
+            Process++;
 
-            // Desired RGB color
-            Color searchColor = Color.FromArgb(22, 57, 61); // Red color
+            int Cur = (int)Math.Floor((float) Process * STEPS / TOTAL);
 
-            // Search for pixels with the desired color
-            List<Point> matchingPixels = new List<Point>();
-            for (int x = 0; x < image.Width; x++)
+            if (Cur > Pre)
             {
-                for (int y = 0; y < image.Height; y++)
-                {
-                    Color pixelColor = image.GetPixel(x, y);
-                    if (pixelColor == searchColor)
-                    {
-                        matchingPixels.Add(new Point(x, y));
-                    }
-                }
-            }
-
-            // Print the coordinates of the matching pixels
-            foreach (Point p in matchingPixels)
-            {
-                Console.WriteLine("Found matching pixel at ({0}, {1})", p.X, p.Y);
-            }
-            if (matchingPixels.Count == 0)
-            {
-                Console.WriteLine("there is non");
+                Console.SetCursorPosition(0, PercentageMessages);
+                Console.WriteLine(Cur);
             }
         }
-        static void CreateAnImageWithDrawings()
+        static void InitPercentageMessages(string Message, int Total)
         {
-            // Create a new bitmap with the desired size
-            Bitmap image = new Bitmap(500, 500);
+            TOTAL = Total;
+            STEPS = 100;
 
-            // Draw something on the bitmap (optional)
-            using (Graphics g = Graphics.FromImage(image))
-            {
-                g.Clear(Color.White);
-                g.DrawLine(Pens.Red, 0, 0, image.Width, image.Height);
+            Console.WriteLine(Message);
+            PercentageMessages += 2;
 
-                g.DrawArc(Pens.Green, 0, 0, image.Width, image.Height, 45, 180);
-
-                g.DrawArc(Pens.Red, 0, 0, image.Width, image.Height, 225, 180);
-            }
-
-            // Save the bitmap as a PNG file
-            image.Save("C:\\Users\\ruper\\OneDrive\\שולחן העבודה\\Ruper\\NewImage.jpg", ImageFormat.Png);
-
-            Console.WriteLine("your image has being created");
+            Process = 0;
         }
-        static void CreateAnImageFromAnotherImage()
-        {
-            Image sourceImage = Image.FromFile("C:\\Users\\USER\\OneDrive\\שולחן העבודה\\New folder\\wallpapersden.com_kali-linux-matrix_1980x1080.jpg");
-
-            Bitmap bmp = new Bitmap(sourceImage.Width, sourceImage.Height);
-
-            Graphics g = Graphics.FromImage(bmp);
-
-            g.DrawImage(sourceImage, new Rectangle(1000, 1000, sourceImage.Width, sourceImage.Height));
-
-            Rectangle sourceRect = new Rectangle(0, 0, 100, 100);
-            Rectangle destRect = new Rectangle(0, 0, 100, 100);
-            g.DrawImage(sourceImage, destRect, sourceRect, GraphicsUnit.Pixel);
-
-            bmp.Save("C:\\Users\\USER\\OneDrive\\שולחן העבודה\\New folder (2)\\new image.jpg", ImageFormat.Jpeg);
-
-        }
-        public static Bitmap CombineImages(Bitmap[] images, int targetWidth, int targetHeight, Point[] locations)
-        {
-            // Create a new Bitmap object to hold the combined image
-            Bitmap result = new Bitmap(20000, 20000);
-
-            using (Graphics g = Graphics.FromImage(result))
-            {
-                // Clear the new image with a white background
-                g.Clear(Color.White);
-
-                // Draw each small image onto the new image
-                for (int i = 0; i < images.Length; i++)
-                {
-                    int width = images[i].Width;
-                    int height = images[i].Height;
-
-                    // Shrink the image to fit into the target area
-                    if (width > targetWidth || height > targetHeight)
-                    {
-                        float ratio = Math.Min((float)targetWidth / width, (float)targetHeight / height);
-                        width = (int)(width * ratio);
-                        height = (int)(height * ratio);
-                    }
-
-                    // Calculate the location of the image on the new image
-                    int x = locations[i].X;
-                    int y = locations[i].Y;
-
-                    // Draw the image onto the new image
-                    g.DrawImage(images[i], new Rectangle(x, y, width, height));
-                }
-            }
-            return result;
-        }*/
         static void TileBigImage(string BigImageURL, string ImagesURL)
         {
             int IndexSize = (int)Math.Ceiling((float)256 / ColorCellSize);
@@ -210,12 +77,16 @@ namespace RGBTrial
 
             Image LittleImage;
 
+            InitPercentageMessages("Tiling the big image:", BigImage.Width * BigImage.Height);
+
             using (Graphics g = Graphics.FromImage(FinalImage))
             {
                 for (int x = 0; x < BigImage.Width; x++)
                 {
                     for (int y = 0; y < BigImage.Height; y++)
                     {
+                        PrintPercentage();
+
                         Color Pixel = BigImage.GetPixel(x, y);
                         Pixel = CellRGB(Pixel.R, Pixel.G, Pixel.B);
                         string FolderPath = Path.Combine(ImagesURL, ColorToString(Pixel));
@@ -233,12 +104,12 @@ namespace RGBTrial
                 }
                 BigImage.Dispose();
 
-                FinalImage.Save(BigImageURL.Replace(GetImageName(BigImageURL), "Final Image.jpg"), ImageFormat.Png);
+                FinalImage.Save(BigImageURL.Replace(GetImageName(BigImageURL), "Final Image.jpg"), ImageFormat.Jpeg);
 
                 FinalImage.Dispose();
             }
         }
-        static void MinImage(string ImageURL, int WidthSize, int HeightSize)
+        static string MinImage(string ImageURL, int WidthSize, int HeightSize)
         {
             Image Photo = Image.FromFile(ImageURL);
 
@@ -259,12 +130,16 @@ namespace RGBTrial
 
             Photo.Dispose();
 
-            result.Save(ImageURL.Replace(GetImageName(ImageURL), "New Image.jpg"), ImageFormat.Png);
+            string NewFileName = ImageURL.Replace(GetImageName(ImageURL), $"{RandomFileName()}.jpg");
+
+            result.Save(NewFileName, ImageFormat.Jpeg);
 
             image.Dispose();
             File.Delete(ImageURL);
 
             result.Dispose();
+
+            return NewFileName;
         }
         static void ImageToCell(string Image)
         {
@@ -349,6 +224,29 @@ namespace RGBTrial
             return result;
         }
         //---------------------------------------------------------------
+        static string RandomFileName()
+        {
+            Random random = new Random();
+
+            string FileName = "";
+
+            for (int i = 0; i < 10; i++)
+            {
+                switch (random.Next(1, 4))
+                {
+                    case 1:
+                        FileName += (char)random.Next(48, 58);
+                        break;
+                    case 2:
+                        FileName += (char)random.Next(65, 91);
+                        break;
+                    case 3:
+                        FileName += (char)random.Next(97, 123);
+                        break;
+                }
+            }
+            return FileName;
+        }
         static List<string> CheckFolders(string FoldersLocation)
         {
             List<string> DoesntExist = new List<string>();
@@ -373,11 +271,7 @@ namespace RGBTrial
             List<string> files = new List<string>(Directory.GetFiles(ImagesLocation));
 
             foreach (string File in files)
-            {
-                MinImage(File, LittleImageSize, LittleImageSize);
-
-                ImageToCell(File);
-            }
+                ImageToCell(MinImage(File, LittleImageSize, LittleImageSize));
         }
         static void GenerateColorForTesting(string URL)
         {
@@ -389,11 +283,11 @@ namespace RGBTrial
                 {
                     for (int B = 0; B < 256; B += ColorCellSize)
                     {
-                        for (int i = 0; i < 90; i++)
+                        for (int i = 0; i < 10; i++)
                         {
                             Bitmap Canvas = NewCanvas(LittleImageSize, LittleImageSize, CellRGB(R, G, B));
 
-                            string Location = Path.Combine(URL, random.Next(1, 1000000000).ToString());
+                            string Location = Path.Combine(URL, RandomFileName());
 
                             Canvas.Save(Location + ".jpg", ImageFormat.Png);
                         }
