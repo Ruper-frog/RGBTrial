@@ -17,19 +17,24 @@ namespace RGBTrial
 
         static int Process = 0, TOTAL, STEPS;
 
+        static int SpeedImageCell = 10;
+
         static void Main(string[] args)
         {
-            //foreach (string s in CheckFolders(""))
-            //    Console.WriteLine(s);
+            Console.CursorVisible = false;
 
-            //MinImage("BigImage\\R.jpg", FinalWidth / LittleImageSize, FinalHeight / LittleImageSize);
+            GenerateColorForTesting("Trash");
 
-            TileBigImage("BigImage\\New Image.jpg", "");
+            string BigImageURL = "BigImage\\R.jpg";
 
-            //GenerateColorForTesting("Trash");
+            File.Move(MinImage(BigImageURL, FinalWidth / LittleImageSize, FinalHeight / LittleImageSize), BigImageURL);
 
+            SortImages("Trash");
 
-            //SortImages("Trash");
+            foreach (string s in CheckFolders("SortedImages"))
+                Console.WriteLine(s);
+
+            TileBigImage(BigImageURL, "SortedImages");
         }
         static void PrintPercentage()
         {
@@ -41,7 +46,7 @@ namespace RGBTrial
             if (Cur > Pre)
             {
                 Console.SetCursorPosition(0, PercentageMessages);
-                Console.WriteLine(Cur);
+                Console.WriteLine(Cur + "%");
             }
         }
         static void InitPercentageMessages(string Message, int Total)
@@ -130,7 +135,7 @@ namespace RGBTrial
 
             Photo.Dispose();
 
-            string NewFileName = ImageURL.Replace(GetImageName(ImageURL), $"{RandomFileName()}.jpg");
+            string NewFileName = Path.Combine("MinimizedImages", GetImageName(ImageURL));
 
             result.Save(NewFileName, ImageFormat.Jpeg);
 
@@ -145,7 +150,7 @@ namespace RGBTrial
         {
             Color Cell = ImageCell(Image);
 
-            string CellName = ColorToString(Cell);
+            string CellName = Path.Combine("SortedImages" ,ColorToString(Cell));
 
             if (!Directory.Exists(CellName))
             {
@@ -155,9 +160,9 @@ namespace RGBTrial
 
             string ImageName = GetImageName(Image);
 
-            string Destebation = Path.Combine(CellName, ImageName);
+            string Destination = Path.Combine(CellName, ImageName);
 
-            File.Move(Image, Destebation);
+            File.Move(Image, Destination);
         }
         static string ColorToString(Color Color)
         {
@@ -175,9 +180,9 @@ namespace RGBTrial
 
             int R = 0, G = 0, B = 0;
 
-            for (int x = 0; x < image.Width; x++)
+            for (int x = 0; x < image.Width; x += SpeedImageCell)
             {
-                for (int y = 0; y < image.Height; y++)
+                for (int y = 0; y < image.Height; y += SpeedImageCell)
                 {
                     Color Pixel = image.GetPixel(x, y);
 
@@ -186,9 +191,9 @@ namespace RGBTrial
                     B += Pixel.B;
                 }
             }
-            R /= (image.Height * image.Width);
-            G /= (image.Height * image.Width);
-            B /= (image.Height * image.Width);
+            R /= ((image.Height / SpeedImageCell) * (image.Width / SpeedImageCell));
+            G /= ((image.Height / SpeedImageCell) * (image.Width / SpeedImageCell));
+            B /= ((image.Height / SpeedImageCell) * (image.Width / SpeedImageCell));
 
             image.Dispose();
 
@@ -224,31 +229,10 @@ namespace RGBTrial
             return result;
         }
         //---------------------------------------------------------------
-        static string RandomFileName()
-        {
-            Random random = new Random();
-
-            string FileName = "";
-
-            for (int i = 0; i < 10; i++)
-            {
-                switch (random.Next(1, 4))
-                {
-                    case 1:
-                        FileName += (char)random.Next(48, 58);
-                        break;
-                    case 2:
-                        FileName += (char)random.Next(65, 91);
-                        break;
-                    case 3:
-                        FileName += (char)random.Next(97, 123);
-                        break;
-                }
-            }
-            return FileName;
-        }
         static List<string> CheckFolders(string FoldersLocation)
         {
+            InitPercentageMessages("Checking for empty folders:", (int)Math.Pow(256 / ColorCellSize, 3));
+
             List<string> DoesntExist = new List<string>();
 
             for (int R = 0; R < 256; R += ColorCellSize)
@@ -257,6 +241,8 @@ namespace RGBTrial
                 {
                     for (int B = 0; B < 256; B += ColorCellSize)
                     {
+                        PrintPercentage();
+
                         string FolderPath = Path.Combine(FoldersLocation, ColorToString(CellRGB(R, G, B)));
 
                         if ((!Directory.Exists(FolderPath)) || (Directory.GetFiles(FolderPath).Length == 0))
@@ -270,11 +256,19 @@ namespace RGBTrial
         {
             List<string> files = new List<string>(Directory.GetFiles(ImagesLocation));
 
+            InitPercentageMessages("Minimizing and sorting the images:", files.Count);
+
             foreach (string File in files)
+            {
+                PrintPercentage();
+
                 ImageToCell(MinImage(File, LittleImageSize, LittleImageSize));
+            }
         }
         static void GenerateColorForTesting(string URL)
         {
+            InitPercentageMessages("Generating Colorful Images for testing:", (int)Math.Pow(256 / ColorCellSize, 3) * 10);
+
             Random random = new Random();
 
             for (int R = 0; R < 256; R += ColorCellSize)
@@ -285,9 +279,13 @@ namespace RGBTrial
                     {
                         for (int i = 0; i < 10; i++)
                         {
+                            int A = 256 * 256 * 10 * i + 256 * 256 * B + 256 * G + R;
+
+                            PrintPercentage();
+
                             Bitmap Canvas = NewCanvas(LittleImageSize, LittleImageSize, CellRGB(R, G, B));
 
-                            string Location = Path.Combine(URL, RandomFileName());
+                            string Location = Path.Combine(URL, A.ToString());
 
                             Canvas.Save(Location + ".jpg", ImageFormat.Png);
                         }
