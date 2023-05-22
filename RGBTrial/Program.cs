@@ -109,9 +109,17 @@ namespace RGBTrial
                 }
                 BigImage.Dispose();
 
-                FinalImage.Save(BigImageURL.Replace(GetImageName(BigImageURL), "Final Image.jpg"), ImageFormat.Jpeg);
+                string BigImageFinalLocation = BigImageURL.Replace(GetImageName(BigImageURL), "Final Image.jpg");
+
+                FinalImage.Save(BigImageFinalLocation, ImageFormat.Jpeg);
 
                 FinalImage.Dispose();
+
+                System.Diagnostics.Process.Start(BigImageFinalLocation);
+
+                Console.WriteLine("Press Any Key To Leave . . .");
+
+                ConsoleKeyInfo keyInfo = Console.ReadKey();
             }
         }
         static string MinImage(string ImageURL, int WidthSize, int HeightSize)
