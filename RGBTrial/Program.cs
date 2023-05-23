@@ -25,14 +25,14 @@ namespace RGBTrial
 
             //GenerateColorForTesting("Trash");
 
-            string BigImageURL = "BigImage\\R.jpg";
+            string BigImageURL = "BigImage\\R.jpeg";
 
             string OriginalImageURL = BigImageURL.Replace(GetImageName(BigImageURL), "Original Image.jpg");
 
             if (!File.Exists(OriginalImageURL))
                 CopyAndSaveImage(BigImageURL, OriginalImageURL);
 
-            File.Move(MinImage(BigImageURL, FinalWidth / LittleImageSize, FinalHeight / LittleImageSize), BigImageURL);
+            File.Move(MinImage(BigImageURL, FinalWidth / LittleImageSize, FinalHeight / LittleImageSize), BigImageURL.Replace(GetImageName(BigImageURL), "Minimized Image.jpg"));
 
             //SortImages("Trash");
 
