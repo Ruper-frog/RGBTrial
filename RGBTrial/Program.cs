@@ -23,25 +23,38 @@ namespace RGBTrial
         {
             Console.CursorVisible = false;
 
-            GenerateColorForTesting("Trash");
+            //GenerateColorForTesting("Trash");
 
             string BigImageURL = "BigImage\\R.jpg";
 
+            string OriginalImageURL = BigImageURL.Replace(GetImageName(BigImageURL), "Original Image.jpg");
+
+            if (!File.Exists(OriginalImageURL))
+                CopyAndSaveImage(BigImageURL, OriginalImageURL);
+
             File.Move(MinImage(BigImageURL, FinalWidth / LittleImageSize, FinalHeight / LittleImageSize), BigImageURL);
 
-            SortImages("Trash");
+            //SortImages("Trash");
 
-            foreach (string s in CheckFolders("SortedImages"))
-                Console.WriteLine(s);
+            //foreach (string s in CheckFolders("SortedImages"))
+            //    Console.WriteLine(s);
 
-            TileBigImage(BigImageURL, "SortedImages");
+            //TileBigImage(BigImageURL, "SortedImages");
+        }
+        static void CopyAndSaveImage(string ImageURL, string NewLocation)
+        {
+            Image OriginalImage = Image.FromFile(ImageURL);
+
+            OriginalImage.Save(NewLocation);
+
+            OriginalImage.Dispose();
         }
         static void PrintPercentage()
         {
-            int Pre = (int)Math.Floor((float) Process * STEPS / TOTAL);
+            int Pre = (int)Math.Floor((float)Process * STEPS / TOTAL);
             Process++;
 
-            int Cur = (int)Math.Floor((float) Process * STEPS / TOTAL);
+            int Cur = (int)Math.Floor((float)Process * STEPS / TOTAL);
 
             if (Cur > Pre)
             {
@@ -158,7 +171,7 @@ namespace RGBTrial
         {
             Color Cell = ImageCell(Image);
 
-            string CellName = Path.Combine("SortedImages" ,ColorToString(Cell));
+            string CellName = Path.Combine("SortedImages", ColorToString(Cell));
 
             if (!Directory.Exists(CellName))
             {
