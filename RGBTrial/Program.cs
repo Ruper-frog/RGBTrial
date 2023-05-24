@@ -3,11 +3,16 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Security.Cryptography;
 
 namespace RGBTrial
 {
     internal class Program
     {
+        static RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+
+        static int RandomStringLength = 10;
+
         static int ColorCellSize = 32,
             LittleImageSize = 150,
             FinalWidth = 28800, FinalHeight = 16200;
@@ -18,14 +23,41 @@ namespace RGBTrial
         static int Process = 0, TOTAL, STEPS;
 
         static int SpeedImageCell = 10;
+        static string RandomString()
+        {
+            string str = "";
 
+            for (int i = 0; i < RandomStringLength; i++)
+            {
+                int RandomNumber = GenerateRandomNumber(0, 61);
+
+                if (RandomNumber < 10)
+                    str += (char)('0' + RandomNumber);
+
+                else if (RandomNumber < 36)
+                    str += (char)('a' + RandomNumber - 10);
+
+                else
+                    str += (char)('A' + RandomNumber - 36);
+            }
+            return str;
+
+            int GenerateRandomNumber(int minValue, int maxValue)
+            {
+                byte[] randomNumber = new byte[4];
+                rng.GetBytes(randomNumber);
+
+                int generatedValue = BitConverter.ToInt32(randomNumber, 0);
+                return Math.Abs(generatedValue % (maxValue - minValue + 1)) + minValue;
+            }
+        }
         static void Main(string[] args)
         {
             Console.CursorVisible = false;
 
             //GenerateColorForTesting("Trash");
 
-            string BigImageURL = "BigImage\\R.jpeg";
+            string BigImageURL = "BigImage\\R.jpg";
 
             string OriginalImageURL = BigImageURL.Replace(GetImageName(BigImageURL), "Original Image.jpg");
 
@@ -39,7 +71,7 @@ namespace RGBTrial
             //foreach (string s in CheckFolders("SortedImages"))
             //    Console.WriteLine(s);
 
-            //TileBigImage(BigImageURL, "SortedImages");
+            TileBigImage(OriginalImageURL, "SortedImages");
         }
         static void CopyAndSaveImage(string ImageURL, string NewLocation)
         {
@@ -156,7 +188,7 @@ namespace RGBTrial
 
             Photo.Dispose();
 
-            string NewFileName = Path.Combine("MinimizedImages", GetImageName(ImageURL));
+            string NewFileName = Path.Combine("MinimizedImages", RandomString());
 
             result.Save(NewFileName, ImageFormat.Jpeg);
 
@@ -179,9 +211,7 @@ namespace RGBTrial
                 Directory.CreateDirectory(CellName);
             }
 
-            string ImageName = GetImageName(Image);
-
-            string Destination = Path.Combine(CellName, ImageName);
+            string Destination = Path.Combine(CellName, RandomString());
 
             File.Move(Image, Destination);
         }
@@ -300,13 +330,11 @@ namespace RGBTrial
                     {
                         for (int i = 0; i < 10; i++)
                         {
-                            int A = 256 * 256 * 10 * i + 256 * 256 * B + 256 * G + R;
-
                             PrintPercentage();
 
                             Bitmap Canvas = NewCanvas(LittleImageSize, LittleImageSize, CellRGB(R, G, B));
 
-                            string Location = Path.Combine(URL, A.ToString());
+                            string Location = Path.Combine(URL, RandomString());
 
                             Canvas.Save(Location + ".jpg", ImageFormat.Png);
                         }
