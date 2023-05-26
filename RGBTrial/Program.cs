@@ -11,29 +11,34 @@ namespace RGBTrial
     {
         static int MaxPixelOOM = 18900 * 28350,
             LittleImageSize = 150;
-
         static void DecideBigImageSize(int Rwidth, int Rheight)
         {
-            int FinalImagePixels = MaxPixelOOM / (LittleImageSize * LittleImageSize);
+            // TODO: Make sure thats a good way to calculate that shit
 
-            int TempNewWidth = lcm(Rwidth, LittleImageSize);
-            int TEmpNewHeight = lcm(Rheight, LittleImageSize);
+            int a = (int)Math.Sqrt(MaxPixelOOM / (Rwidth * Rheight));
 
-            float Ratio = Rheight / Rwidth;
+            int TempWidth = a * Rwidth;
+            int TempHeight = a * Rheight;
+
+            OGWidth = TempWidth / LittleImageSize;
+            OGHeight = TempHeight / LittleImageSize;
+
+            FinalWidth = OGWidth * LittleImageSize;
+            FinalHeight = OGHeight * LittleImageSize;
         }
 
         static int RandomStringLength = 10;
 
         static int ColorCellSize = 32,
-            FinalWidth = 18750, FinalHeight = 28125;
-
-        static int PhotoName = 0;
+            FinalWidth, FinalHeight,
+            OGWidth, OGHeight;
 
         static int PercentageMessages = -1;
 
         static int Process = 0, TOTAL, STEPS;
 
         static int SpeedImageCell = 10;
+
         static string RandomString()
         {
             RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
@@ -64,7 +69,37 @@ namespace RGBTrial
                 return Math.Abs(generatedValue % (maxValue - minValue + 1)) + minValue;
             }
         }
-       
+
+        static void FindMe(double Alpha)
+        {
+            List<string> ImagesReady = new List<string>(Directory.GetFiles("BigImage"));
+
+            foreach (string Image in ImagesReady)
+                BigImageHandler(GetFileNameWithExtension(Image), Alpha);
+        }
+
+        static void BigImageHandler(string ImageNameWithType, double Alpha)
+        {
+            string BigImageURL = Path.Combine("BigImage", ImageNameWithType);
+
+            Image BigImage = Image.FromFile(BigImageURL);
+
+            DecideBigImageSize(BigImage.Width, BigImage.Height);
+
+            BigImage.Dispose();
+
+            string DirectoryPath = Path.Combine("BigImage", GetFileName(ImageNameWithType));
+            Directory.CreateDirectory(DirectoryPath);
+
+            CopyAndSaveImage(BigImageURL, Path.Combine(DirectoryPath, ImageNameWithType));
+
+            string PixelizedImage = Path.Combine(DirectoryPath, "Pixelized Image.jpg");
+
+            File.Move(MinImage(BigImageURL, OGWidth, OGHeight), PixelizedImage);
+
+            TileBigImage(PixelizedImage, "SortedImages", Alpha);
+        }
+
         static void Main(string[] args)
         {
             Console.CursorVisible = false;
@@ -72,26 +107,14 @@ namespace RGBTrial
             //DeleteCopies("C:\\Users\\ruper\\OneDrive\\שולחן העבודה\\New folder");
             SortImages("Trash");
 
-            //GenerateColorForTesting("Trash");
-
-            string BigImageURL = "BigImage\\R.jpg";
-
-            string OriginalImageURL = BigImageURL.Replace(GetImageName(BigImageURL), "Original Image.jpg");
-
-            if (!File.Exists(OriginalImageURL))
-                CopyAndSaveImage(BigImageURL, OriginalImageURL);
-
-            string MinimizedImage = BigImageURL.Replace(GetImageName(BigImageURL), "Minimized Image.jpg");
-
-            if (!File.Exists(MinimizedImage))
-                File.Move(MinImage(BigImageURL, FinalWidth / LittleImageSize, FinalHeight / LittleImageSize), MinimizedImage);
-
-
             //foreach (string s in CheckFolders("SortedImages"))
-                //Console.WriteLine(s);
+            //Console.WriteLine(s);
 
-            TileBigImage(MinimizedImage, "SortedImages");
+            double Alpha = 0.4;
+
+            FindMe(Alpha);
         }
+
         static void CopyAndSaveImage(string ImageURL, string NewLocation)
         {
             Image OriginalImage = Image.FromFile(ImageURL);
@@ -100,6 +123,7 @@ namespace RGBTrial
 
             OriginalImage.Dispose();
         }
+
         static void PrintPercentage()
         {
             int Pre = (int)Math.Floor((float)Process * STEPS / TOTAL);
@@ -113,6 +137,7 @@ namespace RGBTrial
                 Console.WriteLine(Cur + "%");
             }
         }
+
         static void InitPercentageMessages(string Message, int Total)
         {
             TOTAL = Total;
@@ -123,8 +148,14 @@ namespace RGBTrial
 
             Process = 0;
         }
-        static void TileBigImage(string BigImageURL, string ImagesURL)
+
+        static void TileBigImage(string BigImageURL, string ImagesURL, double Alpha)
         {
+            bool UsedColorCanvas = false;
+
+            List<int> Xaxis = new List<int>();
+            List<int> Yaxis = new List<int>();
+
             int IndexSize = (int)Math.Ceiling((float)256 / ColorCellSize);
 
             int[,,] IndexOfFolder = new int[IndexSize, IndexSize, IndexSize];
@@ -155,22 +186,25 @@ namespace RGBTrial
                     {
                         PrintPercentage();
 
-                        Color Pixel = BigImage.GetPixel(x, y);
-                        Pixel = CellRGB(Pixel.R, Pixel.G, Pixel.B);
-                        string FolderPath = Path.Combine(ImagesURL, ColorToString(Pixel));
-
-
+                        Color OGPixel = BigImage.GetPixel(x, y);
+                        Color CellPixel = CellRGB(OGPixel.R, OGPixel.G, OGPixel.B);
+                        string FolderPath = Path.Combine(ImagesURL, ColorToString(CellPixel));
 
                         if (!Directory.Exists(FolderPath))
                         {
-                            LittleImage = NewCanvas(LittleImageSize, LittleImageSize, Pixel);
+                            LittleImage = NewCanvas(LittleImageSize, LittleImageSize, OGPixel);
+
+                            UsedColorCanvas = true;
+
+                            Xaxis.Add(x);
+                            Yaxis.Add(y);
                         }
                         else
                         {
                             string[] ImagesArr = Directory.GetFiles(FolderPath);
-                            string LittleImageURL = ImagesArr[(IndexOfFolder[Pixel.R / ColorCellSize, Pixel.G / ColorCellSize, Pixel.B / ColorCellSize]++) % ImagesArr.Length];
+                            string LittleImageURL = ImagesArr[(IndexOfFolder[CellPixel.R / ColorCellSize, CellPixel.G / ColorCellSize, CellPixel.B / ColorCellSize]++) % ImagesArr.Length];
 
-                            LittleImage = Image.FromFile(LittleImageURL);
+                            LittleImage = TweakImage(LittleImageURL, OGPixel, Alpha);
                         }
                         g.DrawImage(LittleImage, new Rectangle(x * LittleImageSize, y * LittleImageSize, LittleImageSize, LittleImageSize));
 
@@ -179,19 +213,25 @@ namespace RGBTrial
                 }
                 BigImage.Dispose();
 
-                string BigImageFinalLocation = BigImageURL.Replace(GetImageName(BigImageURL), "Final Image.jpg");
+                string BigImageFinalLocation = BigImageURL.Replace(GetFileNameWithExtension(BigImageURL), "Final Image.jpg");
 
                 FinalImage.Save(BigImageFinalLocation, ImageFormat.Jpeg);
 
                 FinalImage.Dispose();
 
+                Console.WriteLine(UsedColorCanvas ? "We Suck" : "All Good");
+
+                for (int i = 0; i < Xaxis.Count; i++)
+                    Console.WriteLine(Xaxis[i] + ", " + Yaxis[i]);
+
                 System.Diagnostics.Process.Start(BigImageFinalLocation);
 
-                Console.WriteLine("Press Any Key To Leave . . .");
+                //Console.WriteLine("Press Any Key To Leave . . .");
 
-                ConsoleKeyInfo keyInfo = Console.ReadKey();
+                //ConsoleKeyInfo keyInfo = Console.ReadKey();
             }
         }
+
         static string MinImage(string ImageURL, int WidthSize, int HeightSize)
         {
             Image Photo = Image.FromFile(ImageURL);
@@ -224,6 +264,7 @@ namespace RGBTrial
 
             return NewFileName;
         }
+
         static void ImageToCell(string Image)
         {
             Color Cell = ImageCell(Image);
@@ -240,16 +281,24 @@ namespace RGBTrial
 
             File.Move(Image, Destination);
         }
+
         static string ColorToString(Color Color)
         {
             return $"{Color.R}_{Color.G}_{Color.B}";
         }
-        static string GetImageName(string Image)
-        {
-            int BackSlashIdex = Image.LastIndexOf("\\");
 
-            return Image.Substring(BackSlashIdex + 1, Image.Length - BackSlashIdex - 1);
+        static string GetFileNameWithExtension(string File)
+        {
+            int BackSlashIdex = File.LastIndexOf("\\");
+
+            return File.Substring(BackSlashIdex + 1, File.Length - BackSlashIdex - 1);
         }
+
+        static string GetFileName(string File)
+        {
+            return GetFileNameWithExtension(File.Substring(0, File.IndexOf('.')));
+        }
+
         static Color ImageCell(string ImageURL)
         {
             Bitmap image = new Bitmap(ImageURL);
@@ -275,6 +324,7 @@ namespace RGBTrial
 
             return CellRGB(R, G, B);
         }
+
         static Color CellRGB(int R, int G, int B)
         {
             R /= ColorCellSize;
@@ -293,6 +343,38 @@ namespace RGBTrial
 
             return RGB;
         }
+
+        static Bitmap TweakImage(string ImageURL, Color Des, double Alpha)
+        {
+            Bitmap image = new Bitmap(Bitmap.FromFile(ImageURL));
+
+            for (int x = 0; x < image.Width; x++)
+            {
+                for (int y = 0; y < image.Height; y++)
+                {
+                    Color Cur = image.GetPixel(x, y);
+                    Color NewColor = TweakColor(Cur, Des, Alpha);
+
+                    image.SetPixel(x, y, NewColor);
+                }
+            }
+            return image;
+        }
+
+        static Color TweakColor(Color Cur, Color Des, double Alpha)
+        {
+            int r = TweakInt(Cur.R, Des.R, Alpha);
+            int g = TweakInt(Cur.G, Des.G, Alpha);
+            int b = TweakInt(Cur.B, Des.B, Alpha);
+
+            return Color.FromArgb(r, g, b);
+        }
+
+        static int TweakInt(int Cur, int Des, double Alpha)
+        {
+            return (int)(Math.Round(Cur * (1 - Alpha) + Des * Alpha));
+        }
+
         static Bitmap NewCanvas(int Width, int Height, Color color)
         {
             Bitmap result = new Bitmap(Width, Height);
@@ -304,6 +386,7 @@ namespace RGBTrial
             }
             return result;
         }
+
         //---------------------------------------------------------------
         static List<string> CheckFolders(string FoldersLocation)
         {
@@ -329,13 +412,14 @@ namespace RGBTrial
 
                             DoesntExist.Add($"#{r}{g}{b}");
 
-                            //DoesntExist.Add(GetImageName(FolderPath));
+                            //DoesntExist.Add(GetFileNameWithExtension(FolderPath));
                         }
                     }
                 }
             }
             return DoesntExist;
         }
+
         static void SortImages(string ImagesLocation)
         {
             List<string> files = new List<string>(Directory.GetFiles(ImagesLocation));
@@ -352,6 +436,7 @@ namespace RGBTrial
                 ImageToCell(MinImage(File, LittleImageSize, LittleImageSize));
             }
         }
+
         static void DeleteCopies(string FolderURL)
         {
             List<string> Files = new List<string>(Directory.GetFiles(FolderURL));
@@ -361,9 +446,9 @@ namespace RGBTrial
                 bool Found = false;
 
 
-                string newFileName = GetImageName(file).IndexOf("_") == -1 ? "" : file.Replace(GetImageName(file), GetImageName(file).Substring(file.IndexOf("_") + 1));
+                string newFileName = GetFileNameWithExtension(file).IndexOf("_") == -1 ? "" : file.Replace(GetFileNameWithExtension(file), GetFileNameWithExtension(file).Substring(file.IndexOf("_") + 1));
 
-                if (newFileName != "" && newFileName[newFileName.Length - 1] !=  '\\'&& !File.Exists(newFileName))
+                if (newFileName != "" && newFileName[newFileName.Length - 1] != '\\' && !File.Exists(newFileName))
                 {
                     File.Move(file, newFileName);
                 }
@@ -377,6 +462,7 @@ namespace RGBTrial
                     File.Delete(file);
             }
         }
+
         static void GenerateColorForTesting(string URL)
         {
             InitPercentageMessages("Generating Colorful Images for testing:", (int)Math.Pow(256 / ColorCellSize, 3) * 10);
@@ -402,20 +488,6 @@ namespace RGBTrial
                     }
                 }
             }
-        }
-        static int gcd(int a, int b)
-        {
-            while (b != 0)
-            {
-                int temp = b;
-                b = a % b;
-                a = temp;
-            }
-            return a;
-        }
-        static int lcm(int a, int b)
-        {
-            return (a / gcd(a, b)) * b;
         }
     }
 }
