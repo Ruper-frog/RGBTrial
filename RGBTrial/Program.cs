@@ -13,7 +13,7 @@ namespace RGBTrial
             LittleImageSize = 150;
         static void DecideBigImageSize(int Rwidth, int Rheight)
         {
-            // TODO: Make sure thats a good way to calculate that shit
+            //TODO: Make sure thats a good way to calculate that shit
 
             int a = (int)Math.Sqrt(MaxPixelOOM / (Rwidth * Rheight));
 
@@ -39,10 +39,78 @@ namespace RGBTrial
 
         static int SpeedImageCell = 10;
 
+        static void ShuffleList<T>(List<T> list)
+        {
+            int n = list.Count;
+
+            while (n > 1)
+            {
+                n--;
+                int k = GenerateRandomNumber(0, n);
+
+                T value = list[k];
+                list[k] = list[n];
+                list[n] = value;
+            }
+        }
+
+        static List<Color> GetShuffledNeighbors(Color color)
+        {
+            List<Color> Neighbors = new List<Color>();
+
+            int r = color.R;
+            int g = color.G;
+            int b = color.B;
+
+            if (r - ColorCellSize > 0)
+                Neighbors.Add(Color.FromArgb(r - ColorCellSize, g, b));
+            if (r + ColorCellSize < 256)
+                Neighbors.Add(Color.FromArgb(r + ColorCellSize, g, b));
+
+            if (g - ColorCellSize > 0)
+                Neighbors.Add(Color.FromArgb(r, g - ColorCellSize, b));
+            if (g + ColorCellSize < 256)
+                Neighbors.Add(Color.FromArgb(r, g + ColorCellSize, b));
+
+            if (b - ColorCellSize > 0)
+                Neighbors.Add(Color.FromArgb(r, g, b - ColorCellSize));
+            if (b + ColorCellSize < 256)
+                Neighbors.Add(Color.FromArgb(r, g, b + ColorCellSize));
+
+            ShuffleList(Neighbors);
+
+            return Neighbors;
+        }
+
+        static Color ClosestColor(Color color)
+        {
+            Color temp;
+            List<Color> Neighbors;
+
+            List<Color> UsedColors = new List<Color>();
+
+            Queue<Color> colors = new Queue<Color>();
+
+            colors.Enqueue(color);
+
+            while (true)
+            {
+                UsedColors.Add(temp = colors.Dequeue());
+
+                foreach (Color Neighbor in GetShuffledNeighbors(temp))
+                {
+                    if (UsedColors.Contains(Neighbor))
+                        continue;
+                    if (Directory.Exists(Path.Combine("SortedImages", ColorToString(Neighbor))))
+                        return Neighbor;
+
+                    colors.Enqueue(Neighbor);
+                }
+            }
+        }
+
         static string RandomString()
         {
-            RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-
             string str = "";
 
             for (int i = 0; i < RandomStringLength; i++)
@@ -60,14 +128,16 @@ namespace RGBTrial
             }
             return str;
 
-            int GenerateRandomNumber(int minValue, int maxValue)
-            {
-                byte[] randomNumber = new byte[4];
-                rng.GetBytes(randomNumber);
+        }
+        static int GenerateRandomNumber(int minValue, int maxValue)
+        {
+            RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
 
-                int generatedValue = BitConverter.ToInt32(randomNumber, 0);
-                return Math.Abs(generatedValue % (maxValue - minValue + 1)) + minValue;
-            }
+            byte[] randomNumber = new byte[4];
+            rng.GetBytes(randomNumber);
+
+            int generatedValue = BitConverter.ToInt32(randomNumber, 0);
+            return Math.Abs(generatedValue % (maxValue - minValue + 1)) + minValue;
         }
 
         static void FindMe(double Alpha)
@@ -105,13 +175,12 @@ namespace RGBTrial
             Console.CursorVisible = false;
 
             //DeleteCopies("C:\\Users\\ruper\\OneDrive\\שולחן העבודה\\New folder");
-            SortImages("Trash");
+            //SortImages("Trash");
 
             //foreach (string s in CheckFolders("SortedImages"))
             //Console.WriteLine(s);
 
-            double Alpha = 0.4;
-
+            double Alpha = 0;
             FindMe(Alpha);
         }
 
@@ -192,20 +261,21 @@ namespace RGBTrial
 
                         if (!Directory.Exists(FolderPath))
                         {
-                            LittleImage = NewCanvas(LittleImageSize, LittleImageSize, OGPixel);
+                            //LittleImage = NewCanvas(LittleImageSize, LittleImageSize, OGPixel);
+
+                            FolderPath = Path.Combine(ImagesURL, ColorToString(ClosestColor(CellPixel)));
 
                             UsedColorCanvas = true;
 
                             Xaxis.Add(x);
                             Yaxis.Add(y);
                         }
-                        else
-                        {
-                            string[] ImagesArr = Directory.GetFiles(FolderPath);
-                            string LittleImageURL = ImagesArr[(IndexOfFolder[CellPixel.R / ColorCellSize, CellPixel.G / ColorCellSize, CellPixel.B / ColorCellSize]++) % ImagesArr.Length];
 
-                            LittleImage = TweakImage(LittleImageURL, OGPixel, Alpha);
-                        }
+                        string[] ImagesArr = Directory.GetFiles(FolderPath);
+                        string LittleImageURL = ImagesArr[(IndexOfFolder[CellPixel.R / ColorCellSize, CellPixel.G / ColorCellSize, CellPixel.B / ColorCellSize]++) % ImagesArr.Length];
+
+                        LittleImage = TweakImage(LittleImageURL, OGPixel, Alpha);
+
                         g.DrawImage(LittleImage, new Rectangle(x * LittleImageSize, y * LittleImageSize, LittleImageSize, LittleImageSize));
 
                         LittleImage.Dispose();
@@ -223,6 +293,8 @@ namespace RGBTrial
 
                 for (int i = 0; i < Xaxis.Count; i++)
                     Console.WriteLine(Xaxis[i] + ", " + Yaxis[i]);
+
+                Console.WriteLine("Opening The Big Image");
 
                 System.Diagnostics.Process.Start(BigImageFinalLocation);
 
@@ -347,6 +419,9 @@ namespace RGBTrial
         static Bitmap TweakImage(string ImageURL, Color Des, double Alpha)
         {
             Bitmap image = new Bitmap(Bitmap.FromFile(ImageURL));
+
+            if (Alpha <1e-9)
+                return image;
 
             for (int x = 0; x < image.Width; x++)
             {
