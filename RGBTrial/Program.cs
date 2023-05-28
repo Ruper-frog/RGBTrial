@@ -15,10 +15,10 @@ namespace RGBTrial
         {
             //TODO: Make sure thats a good way to calculate that shit
 
-            int a = (int)Math.Sqrt(MaxPixelOOM / (Rwidth * Rheight));
+            double a = Math.Sqrt((double)MaxPixelOOM / (Rwidth * Rheight));
 
-            int TempWidth = a * Rwidth;
-            int TempHeight = a * Rheight;
+            int TempWidth = (int)(a * Rwidth);
+            int TempHeight = (int)(a * Rheight);
 
             OGWidth = TempWidth / LittleImageSize;
             OGHeight = TempHeight / LittleImageSize;
@@ -85,7 +85,6 @@ namespace RGBTrial
         static Color ClosestColor(Color color)
         {
             Color temp;
-            List<Color> Neighbors;
 
             List<Color> UsedColors = new List<Color>();
 
