@@ -129,6 +129,7 @@ namespace RGBTrial
             return str;
 
         }
+
         static int GenerateRandomNumber(int minValue, int maxValue)
         {
             RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
