@@ -9,16 +9,16 @@ namespace RGBTrial
 {
     internal class Program
     {
-        static int MaxPixelOOM = 18900 * 28350,
+        static int MaxPixelOOM = 535815000,
             LittleImageSize = 150;
-        static void DecideBigImageSize(int Rwidth, int Rheight)
+        static void DecideBigImageSize(int Width, int Height)
         {
             //TODO: Make sure thats a good way to calculate that shit
 
-            double a = Math.Sqrt((double)MaxPixelOOM / (Rwidth * Rheight));
+            double a = Math.Sqrt((double)MaxPixelOOM / (Width * Height));
 
-            int TempWidth = (int)(a * Rwidth);
-            int TempHeight = (int)(a * Rheight);
+            int TempWidth = (int)(a * Width);
+            int TempHeight = (int)(a * Height);
 
             OGWidth = TempWidth / LittleImageSize;
             OGHeight = TempHeight / LittleImageSize;
