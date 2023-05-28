@@ -13,8 +13,6 @@ namespace RGBTrial
             LittleImageSize = 150;
         static void DecideBigImageSize(int Width, int Height)
         {
-            //TODO: Make sure thats a good way to calculate that shit
-
             double a = Math.Sqrt((double)MaxPixelOOM / (Width * Height));
 
             int TempWidth = (int)(a * Width);
@@ -26,6 +24,8 @@ namespace RGBTrial
             FinalWidth = OGWidth * LittleImageSize;
             FinalHeight = OGHeight * LittleImageSize;
         }
+
+        static double Alpha = 0;
 
         static int RandomStringLength = 10;
 
@@ -140,15 +140,15 @@ namespace RGBTrial
             return Math.Abs(generatedValue % (maxValue - minValue + 1)) + minValue;
         }
 
-        static void FindMe(double Alpha)
+        static void FindMe()
         {
             List<string> ImagesReady = new List<string>(Directory.GetFiles("BigImage"));
 
             foreach (string Image in ImagesReady)
-                BigImageHandler(GetFileNameWithExtension(Image), Alpha);
+                BigImageHandler(GetFileNameWithExtension(Image));
         }
 
-        static void BigImageHandler(string ImageNameWithType, double Alpha)
+        static void BigImageHandler(string ImageNameWithType)
         {
             string BigImageURL = Path.Combine("BigImage", ImageNameWithType);
 
@@ -167,7 +167,7 @@ namespace RGBTrial
 
             File.Move(MinImage(BigImageURL, OGWidth, OGHeight), PixelizedImage);
 
-            TileBigImage(PixelizedImage, "SortedImages", Alpha);
+            TileBigImage(PixelizedImage, "SortedImages");
         }
 
         static void Main(string[] args)
@@ -180,8 +180,7 @@ namespace RGBTrial
             //foreach (string s in CheckFolders("SortedImages"))
             //Console.WriteLine(s);
 
-            double Alpha = 0;
-            FindMe(Alpha);
+            FindMe();
         }
 
         static void CopyAndSaveImage(string ImageURL, string NewLocation)
@@ -218,7 +217,7 @@ namespace RGBTrial
             Process = 0;
         }
 
-        static void TileBigImage(string BigImageURL, string ImagesURL, double Alpha)
+        static void TileBigImage(string BigImageURL, string ImagesURL)
         {
             bool UsedColorCanvas = false;
 
@@ -274,7 +273,7 @@ namespace RGBTrial
                         string[] ImagesArr = Directory.GetFiles(FolderPath);
                         string LittleImageURL = ImagesArr[(IndexOfFolder[CellPixel.R / ColorCellSize, CellPixel.G / ColorCellSize, CellPixel.B / ColorCellSize]++) % ImagesArr.Length];
 
-                        LittleImage = TweakImage(LittleImageURL, OGPixel, Alpha);
+                        LittleImage = TweakImage(LittleImageURL, OGPixel);
 
                         g.DrawImage(LittleImage, new Rectangle(x * LittleImageSize, y * LittleImageSize, LittleImageSize, LittleImageSize));
 
@@ -416,7 +415,7 @@ namespace RGBTrial
             return RGB;
         }
 
-        static Bitmap TweakImage(string ImageURL, Color Des, double Alpha)
+        static Bitmap TweakImage(string ImageURL, Color Des)
         {
             Bitmap image = new Bitmap(Bitmap.FromFile(ImageURL));
 
@@ -428,7 +427,7 @@ namespace RGBTrial
                 for (int y = 0; y < image.Height; y++)
                 {
                     Color Cur = image.GetPixel(x, y);
-                    Color NewColor = TweakColor(Cur, Des, Alpha);
+                    Color NewColor = TweakColor(Cur, Des);
 
                     image.SetPixel(x, y, NewColor);
                 }
@@ -436,16 +435,16 @@ namespace RGBTrial
             return image;
         }
 
-        static Color TweakColor(Color Cur, Color Des, double Alpha)
+        static Color TweakColor(Color Cur, Color Des)
         {
-            int r = TweakInt(Cur.R, Des.R, Alpha);
-            int g = TweakInt(Cur.G, Des.G, Alpha);
-            int b = TweakInt(Cur.B, Des.B, Alpha);
+            int r = TweakInt(Cur.R, Des.R);
+            int g = TweakInt(Cur.G, Des.G);
+            int b = TweakInt(Cur.B, Des.B);
 
             return Color.FromArgb(r, g, b);
         }
 
-        static int TweakInt(int Cur, int Des, double Alpha)
+        static int TweakInt(int Cur, int Des)
         {
             return (int)(Math.Round(Cur * (1 - Alpha) + Des * Alpha));
         }
