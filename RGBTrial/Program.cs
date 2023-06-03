@@ -74,7 +74,7 @@ namespace RGBTrial
             //SortImages("Trash");
 
             //foreach (string s in CheckFolders("SortedImages"))
-                //Console.WriteLine(s);
+            //Console.WriteLine(s);
 
             FindMe();
         }
@@ -477,7 +477,7 @@ namespace RGBTrial
 
         static string GetFileNameWithExtension(string File)
         {
-            int BackSlashIdex = File.LastIndexOf("\\");
+            int BackSlashIndex = File.LastIndexOf("\\");
 
             return File.Substring(BackSlashIndex + 1, File.Length - BackSlashIndex - 1);
         }
