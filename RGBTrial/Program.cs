@@ -479,7 +479,7 @@ namespace RGBTrial
         {
             int BackSlashIdex = File.LastIndexOf("\\");
 
-            return File.Substring(BackSlashIdex + 1, File.Length - BackSlashIdex - 1);
+            return File.Substring(BackSlashIndex + 1, File.Length - BackSlashIndex - 1);
         }
 
         static Color CellRGB(int R, int G, int B)
