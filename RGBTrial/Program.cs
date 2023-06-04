@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImageMagick;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -71,7 +72,7 @@ namespace RGBTrial
             Console.CursorVisible = false;
 
             //DeleteCopies("C:\\Users\\ruper\\OneDrive\\שולחן העבודה\\New folder");
-            //SortImages("Trash");
+            SortImages("Trash");
 
             //foreach (string s in CheckFolders("SortedImages"))
             //Console.WriteLine(s);
@@ -99,6 +100,9 @@ namespace RGBTrial
 
         static string MinImage(string ImageURL, int WidthSize, int HeightSize)
         {
+            if (!GetFileTyp(ImageURL).Equals("jpg") || GetFileTyp(ImageURL).Equals("jpeg"))
+                ImageURL = ConvertToJPG(ImageURL);
+
             Image Photo = Image.FromFile(ImageURL);
 
             float ratio = Math.Max(((float)WidthSize + 2) / Photo.Width, ((float)HeightSize + 2) / Photo.Height);
@@ -128,6 +132,20 @@ namespace RGBTrial
             result.Dispose();
 
             return NewFileName;
+        }
+
+        static string ConvertToJPG(string FilePath)
+        {
+            string NewFilePath = GetFileNameAndPath(FilePath) + ".jpg";
+
+            using (var image = new MagickImage(FilePath))
+            {
+                File.Delete(FilePath);
+
+                image.Format = MagickFormat.Jpg;
+                image.Write(NewFilePath);
+            }
+            return NewFilePath;
         }
 
         static void ImageToCell(string Image)
@@ -470,6 +488,11 @@ namespace RGBTrial
             return Math.Abs(generatedValue % (maxValue - minValue + 1)) + minValue;
         }
 
+        static string GetFileNameAndPath(string File)
+        {
+            return File.Substring(0, File.LastIndexOf('\\') + 1) + GetFileName(File);
+        }
+
         static string GetFileName(string File)
         {
             return GetFileNameWithExtension(File.Substring(0, File.IndexOf('.')));
@@ -480,6 +503,13 @@ namespace RGBTrial
             int BackSlashIndex = File.LastIndexOf("\\");
 
             return File.Substring(BackSlashIndex + 1, File.Length - BackSlashIndex - 1);
+        }
+
+        static string GetFileTyp(string File)
+        {
+            int DotIndex = File.LastIndexOf('.');
+
+            return File.Substring(DotIndex + 1, File.Length - DotIndex - 1);
         }
 
         static Color CellRGB(int R, int G, int B)
@@ -506,9 +536,9 @@ namespace RGBTrial
             return $"{Color.R}_{Color.G}_{Color.B}";
         }
 
-                                  //Not In Use
+        //Not In Use
         //--------------------------------------------------------------------
-    
+
         static void DeleteCopies(string FolderURL)
         {
             List<string> Files = new List<string>(Directory.GetFiles(FolderURL));
